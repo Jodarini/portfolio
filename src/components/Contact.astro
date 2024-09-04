@@ -19,15 +19,15 @@
 
 	copyEmailBtn.addEventListener('click', () => {
 		navigator.clipboard.writeText(email).then(() => {
-			copyStatus.textContent = 'Email copied to clipboard!';
-			copyStatus.style.opacity = '1';
+			copyStatus!.textContent = 'Email copied to clipboard!';
+			copyStatus!.style.opacity = '1';
 			setTimeout(() => {
-				copyStatus.style.opacity = '0';
+				copyStatus!.style.opacity = '0';
 			}, 2000);
 		}).catch(err => {
 			console.error('Failed to copy: ', err);
-			copyStatus.textContent = 'Failed to copy email. Please try again.';
-			copyStatus.style.opacity = '1';
+			copyStatus!.textContent = 'Failed to copy email. Please try again.';
+			copyStatus!.style.opacity = '1';
 		});
 	});
 </script>
