@@ -17,7 +17,7 @@
 	const copyStatus = document.getElementById('copyStatus');
 	const email = 'rivasjose9428@gmail.com'; // Replace with your actual email
 
-	copyEmailBtn.addEventListener('click', () => {
+	copyEmailBtn!.addEventListener('click', () => {
 		navigator.clipboard.writeText(email).then(() => {
 			copyStatus!.textContent = 'Email copied to clipboard!';
 			copyStatus!.style.opacity = '1';
