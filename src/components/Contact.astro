@@ -1,0 +1,89 @@
+<section class="contact">
+	<h3>Get in Touch</h3>
+	<p>I'm always open to new opportunities and collaborations.</p>
+  <div class="buttons">
+    <button id="copyEmailBtn" class="contact-button">Copy Email</button>
+    <p id="copyStatus" class="copy-status"></p>
+    <a href="mailto:rivasjose9428@gmail.com" class="contact-button">Email Me</a>
+  </div>
+	<div class="social-links">
+    <a href="https://github.com/jodarini" target="_blank" rel="noopener noreferrer">GitHub</a>
+    <a href="https://www.linkedin.com/in/rivas-benoit/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+	</div>
+</section>
+
+<script>
+	const copyEmailBtn = document.getElementById('copyEmailBtn');
+	const copyStatus = document.getElementById('copyStatus');
+	const email = 'rivasjose9428@gmail.com'; // Replace with your actual email
+
+	copyEmailBtn.addEventListener('click', () => {
+		navigator.clipboard.writeText(email).then(() => {
+			copyStatus.textContent = 'Email copied to clipboard!';
+			copyStatus.style.opacity = '1';
+			setTimeout(() => {
+				copyStatus.style.opacity = '0';
+			}, 2000);
+		}).catch(err => {
+			console.error('Failed to copy: ', err);
+			copyStatus.textContent = 'Failed to copy email. Please try again.';
+			copyStatus.style.opacity = '1';
+		});
+	});
+</script>
+
+<style>
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 2em;
+  justify-content:center;
+}
+	.contact {
+		text-align: center;
+	}
+	h3 {
+		font-size: 1.5rem;
+		color: var(--secondary);
+		margin-bottom: 1rem;
+	}
+	p {
+		margin-bottom: 1.5rem;
+	}
+
+	.social-links {
+		margin-top: 2rem;
+	}
+	.social-links a {
+		color: var(--text);
+		text-decoration: none;
+		margin: 0 0.5rem;
+		transition: color 0.3s ease;
+	}
+	.social-links a:hover {
+		color: var(--accent);
+	}
+.contact-button {
+		display: inline-block;
+		background-color: var(--accent);
+		color: var(--background);
+		padding: 0.75rem 1.5rem;
+		border-radius: 25px;
+		text-decoration: none;
+		font-weight: bold;
+		transition: opacity 0.3s ease;
+		border: none;
+		cursor: pointer;
+	}
+	.contact-button:hover {
+		opacity: 0.9;
+	}
+	.copy-status {
+		height: 1.5em;
+		margin-top: 0.5rem;
+		font-size: 0.9rem;
+		color: var(--secondary);
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+</style>
