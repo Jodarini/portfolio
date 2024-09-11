@@ -2,9 +2,14 @@
 	<h3>Get in Touch</h3>
 	<p>I'm always open to new opportunities and collaborations.</p>
   <div class="buttons">
-    <button id="copyEmailBtn" class="contact-button">Copy Email</button>
+    <button id="copyEmailBtn" class="contact-button">
+      rivasjose9428@gmail.com 
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" data-icon="SvgCopy" aria-hidden="true">
+        <path d="M19 21H9.4a2 2 0 01-2-2V9.4a2 2 0 012-2H19a2 2 0 012 2V19a2 2 0 01-2 2zM7.3 16.6H5a2.006 2.006 0 01-2-2V5a2.008 2.008 0 012-2h9.6a2.006 2.006 0 012 2v2.3">
+        </path>
+      </svg>
+    </button>
     <p id="copyStatus" class="copy-status"></p>
-    <a href="mailto:rivasjose9428@gmail.com" class="contact-button">Email Me</a>
   </div>
 	<div class="social-links">
     <a href="https://github.com/jodarini" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -33,12 +38,16 @@
 </script>
 
 <style>
-.buttons {
-  display: flex;
-  flex-direction: row;
-  gap: 2em;
-  justify-content:center;
-}
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .buttons > button {
+    max-width: max-content;
+    cursor: pointer;
+  }
 	.contact {
 		text-align: center;
 	}
@@ -64,7 +73,8 @@
 		color: var(--accent);
 	}
 .contact-button {
-		display: inline-block;
+		display: flex;
+    align-items: center;
 		background-color: var(--accent);
 		color: var(--background);
 		padding: 0.75rem 1.5rem;
