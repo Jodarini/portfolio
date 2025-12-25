@@ -1,148 +1,75 @@
 ---
 const projects = [
-	{
-		title: "Sclonetify",
-		description: "A functional Spotify Clone written in TypeScript using NEXT.JS.",
+  {
+    title: "Stock it",
+    description: "Stock It (Yobanas Manager) is a mobile‑first SaaS for fashion retailers to manage inventory, product variants, and sales analytics in real time. ",
+    link: "https://yobanas-manager.vercel.app/",
+    github: "https://github.com/Jodarini/yobanas-manager",
+    image: "/projects/yobanas.png",
+    techStack: ["TypeScript", "Vue 3", "Nuxt.js", "Tailwind CSS", "Drizzle-orm", "Postgresql", "Shadcn-vue"]
+  },
+  {
+    title: "Split it",
+    description: "A simple and intuitive app designed to help you easily split bills and receipts among friends ",
+    link: "https://splitit.jodarini.dev",
+    github: "https://github.com/Jodarini/SplitIt",
+    image: "/projects/splitit.png",
+    techStack: ["Vue.js", "TypeScript", "Tailwind CSS"]
+  },
+  {
+    title: "Sclonetify",
+    description: "A functional Spotify Clone written in TypeScript using NEXT.JS.",
     link: "https://sclonetify.jodarini.dev/",
     github: "https://github.com/Jodarini/spotify-clone",
     image: "/projects/sclonetify.png",
     techStack: ["React", "Next.js", "App Router", "TypeScript", "Spotify Web API", "Context API", "Tailwind CSS"]
-	},
-	{
-		title: "Yobana`s App",
-		description: "A Fullstack application designed to help stores efficiently manage their products.",
-    // link: "https://yobanas.jodarini.dev",
-    github: "https://github.com/Jodarini/yobanas-manager",
-		image: "/projects/yobanas.png",
-    techStack: ["TypeScript", "Vue 3","Nuxt.js", "Tailwind CSS", "Drizzle-orm", "Postgresql", "Shadcn-vue"]
   },
-	{
-		title: "Split it",
-		description: "A simple and intuitive app designed to help you easily split bills and receipts among friends ",
-    link: "https://splitit.jodarini.dev",
-    github: "https://github.com/Jodarini/SplitIt",
-    image: "/projects/splitit.png",
-		techStack: ["Vue.js", "TypeScript", "Tailwind CSS"]
-	},
-	{
-		title: "Tarkov App",
-		description: "A Next.js app built with TypeScript that fetches data from the Tarkov.dev API to display a comprehensive list of in-game items, including their prices and detailed information",
+  {
+    title: "Tarkov App",
+    description: "A Next.js app built with TypeScript that fetches data from the Tarkov.dev API to display a comprehensive list of in-game items, including their prices and detailed information",
     link: "https://tarkov.jodarini.dev",
     github: "https://github.com/Jodarini/tarkov",
-		image: "/projects/tarkov.png",
+    image: "/projects/tarkov.png",
     techStack: ["TypeScript", "React","Next.js", "Pages Router", "Tailwind CSS", "GraphQL"]
-	}
+  }
 ];
 ---
 
-<section class="projects">
-	<h3>Projects</h3>
-	<div class="project-grid">
-		{projects.map(project => (
-			<div class="project-card">
-				<img src={project.image} alt={`Preview of ${project.title}`} class="project-image" />
-				<div class="project-content">
-					<h4>{project.title}</h4>
-					<p>{project.description}</p>
-					<div class="tech-stack">
-						{project.techStack.map(tech => (
-							<span class="tech-badge">{tech}</span>
-						))}
-					</div>
-          <div class="project-links">
+<section class="projects mb-16">
+  <h3 class="text-2xl text-[var(--secondary)] mb-4 font-bold">Projects</h3>
+  <div class="flex flex-col gap-4">
+    {projects.map(project => (
+    <div class="rounded-lg overflow-hidden border border-gray-200/10 p-4 flex flex-col gap-4 md:items-center md:flex-row">
+        <img src={project.image} alt={`Preview of ${project.title}`} class="w-full object-cover rounded-lg" />
+<div class="project-content flex flex-col justify-between w-full md:w-4/5">
+          <h4 class="text-[1.2rem] text-[var(--accent)] mb-2 mt-0 font-bold">{project.title}</h4>
+          <p class="text-sm mb-4 leading-relaxed">{project.description}</p>
+          
+          <div class="flex flex-wrap gap-2 mb-4">
+            {project.techStack.map(tech => (
+            // <span class="bg-[var(--accent)]/10 text-[var(--accent)] px-2 py-1 rounded-full text-[0.8rem]">
+            //     {tech}
+            //   </span>
+
+              <span class="border border-gray-200/10 px-2 py-1 rounded-full text-[0.8rem]">
+                {tech}
+              </span>
+            ))}
+          </div>
+
+          <div class="project-links flex justify-between">
             {project.link && 
-              <a href={project.link} class="project-link" target="_blank">View Project</a>
+              <a href={project.link} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
+                View Project
+              </a>
             }
-            <a href={project.github} class="project-link" target="_blank">
+            <a href={project.github} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
               Github
             </a>
           </div>
-				</div>
-			</div>
-		))}
-	</div>
+        </div>
+      </div>
+    ))}
+  </div>
 </section>
 
-<style>
-	.projects {
-		margin-bottom: 4rem;
-	}
-	h3 {
-		font-size: 1.5rem;
-		color: var(--secondary);
-		margin-bottom: 1rem;
-	}
-	.project-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: 2rem;
-	}
-	.project-card {
-		background-color: rgba(137, 220, 235, 0.1);
-		border-radius: 8px;
-		overflow: hidden;
-		transition: transform 0.3s ease, box-shadow 0.3s ease;
-	}
-	.project-card:hover {
-		transform: translateY(-5px);
-		box-shadow: 0 4px 20px rgba(137, 220, 235, 0.2);
-	}
-	.project-image {
-		width: 100%;
-		height: 200px;
-		object-fit: cover;
-	}
-	.project-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-		padding: 1.5rem;
-	}
-  .project-content ~ img {
-    width: 1rem;
-  }
-	h4 {
-		color: var(--accent);
-		margin-bottom: 0.5rem;
-		font-size: 1.2rem;
-    margin-top: 0;
-	}
-	p {
-		margin-bottom: 1rem;
-		font-size: 0.9rem;
-	}
-	.tech-stack {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin-bottom: 1rem;
-	}
-	.tech-badge {
-		background-color: rgba(245, 194, 231, 0.2);
-		color: var(--accent);
-		padding: 0.25rem 0.5rem;
-		border-radius: 20px;
-		font-size: 0.8rem;
-	}
-  .project-links {
-    display: flex;
-    justify-content: space-between;
-  }
-	.project-link {
-		display: inline-block;
-		color: var(--secondary);
-		text-decoration: none;
-		border-bottom: 1px solid var(--secondary);
-		transition: opacity 0.3s ease;
-		font-size: 0.9rem;
-	}
-	.project-link:hover {
-		opacity: 0.8;
-	}
-
-	@media (max-width: 768px) {
-		.project-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>

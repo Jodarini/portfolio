@@ -1,99 +1,44 @@
-<section class="contact">
-	<h3>Get in Touch</h3>
-	<p>I'm always open to new opportunities and collaborations.</p>
-  <div class="buttons">
-    <button id="copyEmailBtn" class="contact-button">
-      rivasjose9428@gmail.com 
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" data-icon="SvgCopy" aria-hidden="true">
-        <path d="M19 21H9.4a2 2 0 01-2-2V9.4a2 2 0 012-2H19a2 2 0 012 2V19a2 2 0 01-2 2zM7.3 16.6H5a2.006 2.006 0 01-2-2V5a2.008 2.008 0 012-2h9.6a2.006 2.006 0 012 2v2.3">
-        </path>
+<section class="contact text-center py-8">
+  <h3 class="text-2xl text-[var(--secondary)] mb-4 font-bold">Get in Touch</h3>
+  <p class="mb-6 text-[var(--text)]">I'm always open to new opportunities and collaborations.</p>
+  
+  <div class="buttons flex flex-col justify-center items-center">
+    <button id="copyEmailBtn" class="contact-button flex items-center bg-[var(--accent)] text-[var(--background)] px-6 py-3 rounded-full font-bold transition-opacity duration-300 hover:opacity-90 max-w-max cursor-pointer border-none">
+      <span class="mr-2">rivasjose9428@gmail.com</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" data-icon="SvgCopy" aria-hidden="true">
+        <path d="M19 21H9.4a2 2 0 01-2-2V9.4a2 2 0 012-2H19a2 2 0 012 2V19a2 2 0 01-2 2zM7.3 16.6H5a2.006 2.006 0 01-2-2V5a2.008 2.008 0 012-2h9.6a2.006 2.006 0 012 2v2.3"></path>
       </svg>
     </button>
-    <p id="copyStatus" class="copy-status"></p>
+    <p id="copyStatus" class="copy-status h-[1.5em] mt-2 text-sm text-[var(--secondary)] opacity-0 transition-opacity duration-300"></p>
   </div>
-	<div class="social-links">
-    <a href="https://github.com/jodarini" target="_blank" rel="noopener noreferrer">GitHub</a>
-    <a href="https://www.linkedin.com/in/rivas-benoit/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-	</div>
+
+  <div class="social-links mt-8">
+    <a href="https://github.com/jodarini" target="_blank" rel="noopener noreferrer" class="text-[var(--text)] no-underline mx-2 transition-colors duration-300 hover:text-[var(--accent)]">GitHub</a>
+    <a href="https://www.linkedin.com/in/rivas-benoit/" target="_blank" rel="noopener noreferrer" class="text-[var(--text)] no-underline mx-2 transition-colors duration-300 hover:text-[var(--accent)]">LinkedIn</a>
+  </div>
 </section>
 
 <script>
-	const copyEmailBtn = document.getElementById('copyEmailBtn');
-	const copyStatus = document.getElementById('copyStatus');
-	const email = 'rivasjose9428@gmail.com'; // Replace with your actual email
+  const copyEmailBtn = document.getElementById('copyEmailBtn');
+  const copyStatus = document.getElementById('copyStatus');
+  const email = 'rivasjose9428@gmail.com';
 
-	copyEmailBtn!.addEventListener('click', () => {
-		navigator.clipboard.writeText(email).then(() => {
-			copyStatus!.textContent = 'Email copied to clipboard!';
-			copyStatus!.style.opacity = '1';
-			setTimeout(() => {
-				copyStatus!.style.opacity = '0';
-			}, 2000);
-		}).catch(err => {
-			console.error('Failed to copy: ', err);
-			copyStatus!.textContent = 'Failed to copy email. Please try again.';
-			copyStatus!.style.opacity = '1';
-		});
-	});
+  copyEmailBtn?.addEventListener('click', () => {
+    navigator.clipboard.writeText(email).then(() => {
+      if (copyStatus) {
+        copyStatus.textContent = 'Email copied to clipboard!';
+        copyStatus.classList.replace('opacity-0', 'opacity-100');
+        setTimeout(() => {
+          copyStatus.classList.replace('opacity-100', 'opacity-0');
+        }, 2000);
+      }
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+      if (copyStatus) {
+        copyStatus.textContent = 'Failed to copy email.';
+        copyStatus.classList.replace('opacity-0', 'opacity-100');
+      }
+    });
+  });
 </script>
 
-<style>
-  .buttons {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-  .buttons > button {
-    max-width: max-content;
-    cursor: pointer;
-  }
-	.contact {
-		text-align: center;
-	}
-	h3 {
-		font-size: 1.5rem;
-		color: var(--secondary);
-		margin-bottom: 1rem;
-	}
-	p {
-		margin-bottom: 1.5rem;
-	}
-
-	.social-links {
-		margin-top: 2rem;
-	}
-	.social-links a {
-		color: var(--text);
-		text-decoration: none;
-		margin: 0 0.5rem;
-		transition: color 0.3s ease;
-	}
-	.social-links a:hover {
-		color: var(--accent);
-	}
-.contact-button {
-		display: flex;
-    align-items: center;
-		background-color: var(--accent);
-		color: var(--background);
-		padding: 0.75rem 1.5rem;
-		border-radius: 25px;
-		text-decoration: none;
-		font-weight: bold;
-		transition: opacity 0.3s ease;
-		border: none;
-		cursor: pointer;
-	}
-	.contact-button:hover {
-		opacity: 0.9;
-	}
-	.copy-status {
-		height: 1.5em;
-		margin-top: 0.5rem;
-		font-size: 0.9rem;
-		color: var(--secondary);
-		opacity: 0;
-		transition: opacity 0.3s ease;
-	}
-</style>
