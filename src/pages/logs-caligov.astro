@@ -321,7 +321,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     }
 
     const ultima = enVivo?.at ?? vigia?.ultimaRevision?.at ?? null;
-    $('resumen').textContent = ultima ? `Actualizado a las ${hora(ultima)} · se revisa cada minuto.` : '';
+    $('resumen').textContent = ultima ? `Actualizado a las ${hora(ultima)}` : '';
 
     const avisos: string[] = [];
     if (!enVivo) avisos.push('No se pudo consultar cali.gov.co desde este navegador; se muestra la última revisión del servidor.');
@@ -428,12 +428,19 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
         ),
         ...vigia.eventos.slice(0, 150).map((e) => {
           const tono = e.tipo === 'arreglada' ? 'ok' : e.tipo === 'aparece-rota' || e.tipo === 'vuelve-a-fallar' ? 'rota' : '';
+          // El enlace del boletín; si el vigía ya no lo tiene, el de su ID
+          // (cali.gov.co lo redirige a la página del boletín).
+          const url =
+            delVigia.get(e.pubId)?.enlace ??
+            (/^\d+$/.test(e.pubId) ? `https://www.cali.gov.co/publicaciones/${e.pubId}/` : null);
+          const boletin = enlace(e.titulo, url, 'que');
+          boletin.setAttribute('title', e.titulo);
           return el(
             'li',
             null,
             el('span', { class: 'cuando', title: `Evento: ${fechaHora(e.at)}`, text: fechaHora(e.publicada) }),
             el('span', { class: tono, text: EVENTOS[e.tipo] ?? e.tipo }),
-            el('span', { class: 'que', title: e.titulo, text: e.titulo }),
+            boletin,
           );
         }),
       );
