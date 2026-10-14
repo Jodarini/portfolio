@@ -3,21 +3,16 @@ import '../styles/global.css'
 
 interface Props {
   title: string;
-  lang?: string;
-  description?: string;
-  /** e.g. "noindex, nofollow" for pages that shouldn't show up in search. */
-  robots?: string;
 }
 
-const { title, lang = "en", description = "Rivas Benoit Full-stack Developer", robots } = Astro.props;
+const { title } = Astro.props;
 ---
 
 <!DOCTYPE html>
-<html lang={lang} class="bg-[var(--background)] text-[var(--text)] font-sans">
+<html lang="en" class="bg-[var(--background)] text-[var(--text)] font-sans">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={description}>
-    {robots && <meta name="robots" content={robots} />}
+    <meta name="description" content="Rivas Benoit Full-stack Developer">
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
