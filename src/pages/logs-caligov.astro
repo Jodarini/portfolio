@@ -55,6 +55,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
         <h2 id="t-historial">Historial</h2>
         <p class="descripcion">Cada cambio registrado, con la fecha de publicación del boletín.</p>
         <ul id="eventos" class="historial"><li class="vacio">Cargando…</li></ul>
+        <div id="eventos-mas"></div>
       </section>
 
       <footer class="barra">
@@ -124,14 +125,26 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   .datos b.rota { color: var(--rota); }
   .datos b.ok { color: var(--ok); }
 
+  .dia {
+    margin: 24px 0 12px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--suave);
+  }
+  .dia:first-child { margin-top: 0; }
   .lote { margin-bottom: 20px; }
   .lote:last-child { margin-bottom: 0; }
-  .lote h3 { margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; }
-  .lote h3 span { font-weight: 400; color: var(--suave); }
+  .lote h4 { margin: 0 0 8px; font-size: 0.875rem; font-weight: 600; }
   .lote ul { border-left: 2px solid color-mix(in srgb, var(--ok) 40%, transparent); padding-left: 12px; }
   .lote li { font-size: 0.9rem; margin-bottom: 10px; }
   .lote li:last-child { margin-bottom: 0; }
 
+  .mas {
+    display: block; width: 100%; margin-top: 16px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--borde); background: transparent; color: var(--texto);
+    font: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer;
+  }
+  .mas:hover { background: #1e222a; }
+  .mas span { color: var(--suave); font-weight: 400; }
+  .nota { margin: 14px 0 0; font-size: 0.82rem; color: var(--suave); }
   .historial li { display: grid; grid-template-columns: 1fr; gap: 0 16px; padding: 7px 0; border-top: 1px solid var(--borde); font-size: 0.84rem; }
   .historial li:first-child { border-top: 0; }
   @media (min-width: 640px) { .historial li { grid-template-columns: 10.5rem 10rem minmax(0, 1fr); } }
@@ -202,6 +215,16 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   let enVivo: { at: string; vistas: Vista[] } | null = null;
   const publicadas = new Map<string, string>(); // pubId → ISO (las que el vigía no tiene)
 
+  // «Ver más»: cuántos grupos de correcciones y cuántos cambios del historial
+  // se muestran. Se conserva al refrescar cada minuto.
+  const PASO_LOTES = 6;
+  const PASO_EVENTOS = 25;
+  // El servidor manda como mucho los últimos 300 cambios (publico.js); el
+  // historial completo va en el Excel.
+  const MAX_EVENTOS_PUBLICOS = 300;
+  let limiteLotes = PASO_LOTES;
+  let limiteEventos = PASO_EVENTOS;
+
   // ── Utilidades ──
   function el(tag: string, props?: Record<string, string> | null, ...hijos: (Node | string | null | false)[]) {
     const n = document.createElement(tag);
@@ -227,6 +250,26 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     iso
       ? new Date(iso).toLocaleString('es-CO', { timeZone: ZONA, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
       : '—';
+  /** «las 03:28 p. m.» / «la 01:06 p. m.» (en español es «la una»). */
+  const aLas = (iso: string) => {
+    const h = hora(iso);
+    return `${/^0?1:/.test(h) ? 'la' : 'las'} ${h}`;
+  };
+  /** Día en Colombia como AAAA-MM-DD (para agrupar). */
+  const claveDia = (iso: string | number) => new Date(iso).toLocaleDateString('en-CA', { timeZone: ZONA });
+  /** «Hoy», «Ayer» o «Lunes 12 de octubre». */
+  function etiquetaDia(iso: string) {
+    const dia = claveDia(iso);
+    if (dia === claveDia(Date.now())) return 'Hoy';
+    if (dia === claveDia(Date.now() - 86_400_000)) return 'Ayer';
+    const texto = new Date(iso).toLocaleDateString('es-CO', { timeZone: ZONA, weekday: 'long', day: 'numeric', month: 'long' });
+    return texto.charAt(0).toUpperCase() + texto.slice(1).replace(',', '');
+  }
+  function botonMas(texto: string, resto: string, alPulsar: () => void) {
+    const b = el('button', { type: 'button', class: 'mas' }, `${texto} `, el('span', { text: resto }));
+    b.addEventListener('click', alPulsar);
+    return b;
+  }
   function duracion(min: number) {
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
@@ -321,7 +364,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     }
 
     const ultima = enVivo?.at ?? vigia?.ultimaRevision?.at ?? null;
-    $('resumen').textContent = ultima ? `Actualizado a las ${hora(ultima)}` : '';
+    $('resumen').textContent = ultima ? `Actualizado a ${aLas(ultima)}` : '';
 
     const avisos: string[] = [];
     if (!enVivo) avisos.push('No se pudo consultar cali.gov.co desde este navegador; se muestra la última revisión del servidor.');
@@ -357,66 +400,81 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
         : [el('li', { class: 'vacio', text: 'Todos los boletines de la portada tienen imagen.' })]),
     );
 
-    // Imágenes ya corregidas (del vigía)
+    // Imágenes ya corregidas (del vigía): por día, de la más reciente a la
+    // más antigua; los grupos de a PASO_LOTES con «Ver más».
     if (!vigia) {
       $('lotes').replaceChildren(el('p', { class: 'vacio', text: 'No disponible en este momento.' }));
     } else {
-      const lotes = new Map<string, { arreglada: string; ultimaRota: string | null; items: PubVigia[] }>();
+      const lotes = new Map<string, { arreglada: string; items: PubVigia[] }>();
       for (const p of vigia.publicaciones) {
         if (p.estado !== 'ok' || !p.arreglada) continue;
-        const lote = lotes.get(p.arreglada) ?? { arreglada: p.arreglada, ultimaRota: p.ultimaRota, items: [] };
+        const lote = lotes.get(p.arreglada) ?? { arreglada: p.arreglada, items: [] };
         lote.items.push(p);
         lotes.set(p.arreglada, lote);
       }
       const ordenados = [...lotes.values()].sort((a, b) => b.arreglada.localeCompare(a.arreglada));
+      const nodos: Node[] = [];
+      let diaAnterior = '';
+      for (const l of ordenados.slice(0, limiteLotes)) {
+        const dia = claveDia(l.arreglada);
+        if (dia !== diaAnterior) {
+          nodos.push(el('h3', { class: 'dia', text: etiquetaDia(l.arreglada) }));
+          diaAnterior = dia;
+        }
+        nodos.push(
+          el(
+            'div',
+            { class: 'lote' },
+            el('h4', {
+              text: `${l.items.length === 1 ? 'Imagen arreglada' : 'Imágenes arregladas'} alrededor de ${aLas(l.arreglada)}`,
+            }),
+            el(
+              'ul',
+              null,
+              ...l.items.map((p) => {
+                const minimo = p.minutosDesdePublicacion == null && p.rotaDesde === vigia?.desde;
+                const tardo = p.minutosDesdePublicacion ?? p.minutosRota ?? 0;
+                return el(
+                  'li',
+                  null,
+                  enlace(p.titulo, p.enlace),
+                  el(
+                    'div',
+                    { class: 'datos' },
+                    dato('Publicado', hora(p.publicada)),
+                    dato('Con imagen', hora(p.arreglada)),
+                    dato('Tardó', (minimo ? 'al menos ' : '') + duracion(tardo), 'ok'),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      }
+      const ocultos = ordenados.slice(limiteLotes);
+      if (ocultos.length) {
+        const imagenes = ocultos.reduce((n, l) => n + l.items.length, 0);
+        nodos.push(
+          botonMas('Ver más', `(${imagenes} ${imagenes === 1 ? 'imagen' : 'imágenes'})`, () => {
+            limiteLotes += PASO_LOTES;
+            pintar();
+          }),
+        );
+      }
       $('lotes').replaceChildren(
-        ...(ordenados.length
-          ? ordenados.map((l) =>
-              el(
-                'div',
-                { class: 'lote' },
-                el(
-                  'h3',
-                  null,
-                  fechaHora(l.arreglada),
-                  el('span', {
-                    text:
-                      ` · ${l.items.length === 1 ? '1 imagen' : `${l.items.length} imágenes a la vez`}` +
-                      (l.ultimaRota ? ` · entre las ${hora(l.ultimaRota)} y las ${hora(l.arreglada)}` : ''),
-                  }),
-                ),
-                el(
-                  'ul',
-                  null,
-                  ...l.items.map((p) => {
-                    const minimo = p.minutosDesdePublicacion == null && p.rotaDesde === vigia?.desde;
-                    const tardo = p.minutosDesdePublicacion ?? p.minutosRota ?? 0;
-                    return el(
-                      'li',
-                      null,
-                      enlace(p.titulo, p.enlace),
-                      el(
-                        'div',
-                        { class: 'datos' },
-                        el('span', { text: `#${p.pubId}` }),
-                        dato('Publicado', hora(p.publicada)),
-                        dato('Con imagen', hora(p.arreglada)),
-                        dato('Tardó', (minimo ? 'al menos ' : '') + duracion(tardo), 'ok'),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            )
-          : [el('p', { class: 'vacio', text: 'Todavía no se ha corregido ninguna.' })]),
+        ...(nodos.length ? nodos : [el('p', { class: 'vacio', text: 'Todavía no se ha corregido ninguna.' })]),
       );
     }
 
-    // Historial (del vigía), con la fecha de publicación de cada boletín
+    // Historial (del vigía), con la fecha de publicación de cada boletín;
+    // de a PASO_EVENTOS cambios con «Ver más».
+    const mas = $('eventos-mas');
     if (!vigia) {
       $('eventos').replaceChildren(el('li', { class: 'vacio', text: 'No disponible en este momento.' }));
+      mas.replaceChildren();
     } else if (!vigia.eventos.length) {
       $('eventos').replaceChildren(el('li', { class: 'vacio', text: 'Todavía no hay cambios.' }));
+      mas.replaceChildren();
     } else {
       $('eventos').replaceChildren(
         el(
@@ -426,7 +484,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
           el('span', { text: 'Evento' }),
           el('span', { text: 'Boletín' }),
         ),
-        ...vigia.eventos.slice(0, 150).map((e) => {
+        ...vigia.eventos.slice(0, limiteEventos).map((e) => {
           const tono = e.tipo === 'arreglada' ? 'ok' : e.tipo === 'aparece-rota' || e.tipo === 'vuelve-a-fallar' ? 'rota' : '';
           // El enlace del boletín; si el vigía ya no lo tiene, el de su ID
           // (cali.gov.co lo redirige a la página del boletín).
@@ -444,6 +502,19 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
           );
         }),
       );
+      const restantes = vigia.eventos.length - limiteEventos;
+      if (restantes > 0) {
+        mas.replaceChildren(
+          botonMas('Ver más', `(${restantes} ${restantes === 1 ? 'cambio' : 'cambios'})`, () => {
+            limiteEventos += PASO_EVENTOS;
+            pintar();
+          }),
+        );
+      } else if (vigia.eventos.length >= MAX_EVENTOS_PUBLICOS) {
+        mas.replaceChildren(el('p', { class: 'nota', text: 'Aquí se muestran los cambios más recientes; el historial completo está en el Excel.' }));
+      } else {
+        mas.replaceChildren();
+      }
     }
   }
 
