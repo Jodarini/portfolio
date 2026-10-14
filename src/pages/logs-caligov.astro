@@ -174,13 +174,14 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     '92627609': 'Home 2 (Noticia destacada)',
     '92627610': 'Slider de noticias',
   };
+  // En pasado: cada evento es algo que ya ocurrió.
   const EVENTOS: Record<string, string> = {
-    'aparece-rota': 'Aparece sin imagen',
-    'aparece-con-imagen': 'Aparece con imagen',
+    'aparece-rota': 'Apareció sin imagen',
+    'aparece-con-imagen': 'Apareció con imagen',
     arreglada: 'Imagen corregida',
-    'vuelve-a-fallar': 'Vuelve a fallar',
-    'sale-de-portada': 'Sale de la portada',
-    'vuelve-a-portada': 'Vuelve a la portada',
+    'vuelve-a-fallar': 'Volvió a fallar',
+    'sale-de-portada': 'Salió del home',
+    'vuelve-a-portada': 'Volvió al home',
   };
 
   interface PubVigia {
@@ -201,6 +202,8 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   interface EventoVigia { at: string; pubId: string; titulo: string; tipo: string; publicada: string | null }
   interface DatosVigia {
     desde: string | null;
+    /** El reporte empieza con los boletines publicados desde aquí (ISO). */
+    reporteDesde?: string | null;
     ultimaRevision: { at: string; ok: boolean; total: number | null } | null;
     publicaciones: PubVigia[];
     eventos: EventoVigia[];
@@ -222,6 +225,9 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   // El servidor manda como mucho los últimos 300 cambios (publico.js); el
   // historial completo va en el Excel.
   const MAX_EVENTOS_PUBLICOS = 300;
+  // Inicio del reporte (medianoche del 14 de octubre en Colombia) si el
+  // vigía no responde; si responde, manda su `reporteDesde`.
+  const REPORTE_DESDE = '2026-10-14T05:00:00.000Z';
   let limiteLotes = PASO_LOTES;
   let limiteEventos = PASO_EVENTOS;
 
@@ -346,8 +352,17 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   // ── Pintar ──
   function pintar() {
     const delVigia = new Map((vigia?.publicaciones ?? []).map((p) => [p.pubId, p]));
+    // Solo boletines publicados desde el inicio del reporte: los del vigía ya
+    // vienen filtrados; los demás, por su fecha de publicación (sin ella aún,
+    // no se muestran).
+    const corte = Date.parse(vigia?.reporteDesde ?? REPORTE_DESDE);
+    const enReporte = (v: Vista) => {
+      if (delVigia.has(v.pubId)) return true;
+      const publicada = publicadas.get(v.pubId);
+      return publicada ? Date.parse(publicada) >= corte : false;
+    };
     const rotas: Vista[] = enVivo
-      ? enVivo.vistas.filter((v) => v.rota)
+      ? enVivo.vistas.filter((v) => v.rota && enReporte(v))
       : (vigia?.publicaciones ?? [])
           .filter((p) => p.enPortada && p.estado === 'rota')
           .map((p) => ({ pubId: p.pubId, titulo: p.titulo, enlace: p.enlace, bloques: p.bloques, rota: true }));
@@ -442,7 +457,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
                     'div',
                     { class: 'datos' },
                     dato('Publicado', hora(p.publicada)),
-                    dato('Con imagen', hora(p.arreglada)),
+                    dato('Apareció la imagen', hora(p.arreglada)),
                     dato('Tardó', (minimo ? 'al menos ' : '') + duracion(tardo), 'ok'),
                   ),
                 );
