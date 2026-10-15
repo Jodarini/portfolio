@@ -200,17 +200,29 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     enPortada: boolean;
     estado: 'ok' | 'rota' | null;
     bloques: string[];
+    /** La pone quien publica en el CMS (a veces solo el día): no mide nada. */
     publicada: string | null;
+    /** Cuándo el monitoreo la vio sin imagen («Apareció sin imagen»): desde
+     *  aquí se mide lo que tardó. */
     rotaDesde: string | null;
-    rotaDesdePublicacion: boolean;
+    /** Vista sin imagen al volver de una pausa (arranque, noche, caída): ya
+     *  estaba así, lo que tardó es «al menos». */
+    rotaTrasPausa?: boolean;
     ultimaRota: string | null;
     arreglada: string | null;
     /** Se arregló con el monitoreo en pausa: fue entre ultimaRota y arreglada. */
     arregloEnPausa?: boolean;
     minutosRota: number | null;
-    minutosDesdePublicacion: number | null;
   }
-  interface EventoVigia { at: string; pubId: string; titulo: string; tipo: string; publicada: string | null }
+  interface EventoVigia {
+    at: string;
+    pubId: string;
+    titulo: string;
+    tipo: string;
+    /** Vista al volver de una pausa: «Ya estaba sin imagen». */
+    trasPausa?: boolean;
+    publicada: string | null;
+  }
   interface DatosVigia {
     desde: string | null;
     /** El reporte empieza con los boletines publicados desde aquí (ISO). */
@@ -242,22 +254,6 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   // Inicio del reporte (medianoche del 14 de octubre en Colombia) si el
   // vigía no responde; si responde, manda su `reporteDesde`.
   const REPORTE_DESDE = '2026-10-14T05:00:00.000Z';
-  // Más de esto entre la publicación y la primera vez que el vigía lo vio:
-  // no lo vio aparecer (mismo criterio que vistoTarde en el servidor).
-  const VISTO_A_TIEMPO_MS = 15 * 60_000;
-
-  /** ¿El monitoreo NO estaba mirando cuando se publicó? Antes de que
-   *  empezara, en la pausa nocturna o visto más de 15 min después. */
-  function vistoTarde(publicada: string | null, vistoEn: string) {
-    const pub = Date.parse(publicada ?? '');
-    if (Number.isNaN(pub)) return false;
-    if (Date.parse(vistoEn) - pub > VISTO_A_TIEMPO_MS) return true;
-    if (vigia?.desde && pub < Date.parse(vigia.desde)) return true;
-    const h = vigia?.horario;
-    if (!h) return false;
-    const hora = (new Date(pub).getUTCHours() + 19) % 24; // Colombia: UTC−5
-    return h.desde <= h.hasta ? !(hora >= h.desde && hora < h.hasta) : !(hora >= h.desde || hora < h.hasta);
-  }
   let limiteLotes = PASO_LOTES;
   let limiteEventos = PASO_EVENTOS;
 
@@ -308,27 +304,31 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   const aLaHora = (h: number) => `${h % 12 === 1 ? 'la' : 'las'} ${h % 12 || 12}:00 ${h < 12 ? 'a. m.' : 'p. m.'}`;
   const mayuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-  /** «12 min», «al menos 2 h» o, si se arregló con el monitoreo en pausa,
-   *  «entre 29 min y 9 h 30 min». */
+  /** La hora; con el día si no es el de `ref` (sin imagen desde ayer). */
+  const horaJunto = (iso: string | null, ref: string | number) =>
+    iso && claveDia(iso) !== claveDia(ref) ? fechaHora(iso) : hora(iso);
+
+  /** Lo que tardó: desde «Apareció sin imagen» hasta «Imagen corregida», no
+   *  desde la publicación del CMS (quien publica pone esa fecha, a veces
+   *  solo el día, y las imágenes pueden subirse después). «12 min», «al
+   *  menos 2 h» o, si se arregló con el monitoreo en pausa, «entre 29 min y
+   *  9 h 30 min». */
   function textoTardanza(p: PubVigia) {
-    const desdePublicacion = p.minutosDesdePublicacion != null;
-    const minutos = (desdePublicacion ? p.minutosDesdePublicacion : p.minutosRota) ?? 0;
-    const base = desdePublicacion ? p.publicada : p.rotaDesde;
-    if (p.arregloEnPausa && p.ultimaRota && base) {
-      const minimo = Math.max(0, Math.round((Date.parse(p.ultimaRota) - Date.parse(base)) / 60000));
+    const minutos = p.minutosRota ?? 0;
+    if (p.arregloEnPausa && p.ultimaRota && p.rotaDesde) {
+      const minimo = Math.max(0, Math.round((Date.parse(p.ultimaRota) - Date.parse(p.rotaDesde)) / 60000));
       return `entre ${duracion(minimo)} y ${duracion(minutos)}`;
     }
-    const alMenos = !desdePublicacion && p.rotaDesde === vigia?.desde ? 'al menos ' : '';
-    return alMenos + duracion(minutos);
+    return (p.rotaTrasPausa ? 'al menos ' : '') + duracion(minutos);
   }
 
   /** Una fila del historial: hora del cambio · qué pasó · boletín; debajo,
    *  cuándo se publicó y, en una corrección, cuánto tardó. */
   function filaEvento(e: EventoVigia, p: PubVigia | undefined) {
     const tono = e.tipo === 'arreglada' ? 'ok' : e.tipo === 'aparece-rota' || e.tipo === 'vuelve-a-fallar' ? 'rota' : '';
-    // Publicado sin el monitoreo mirando: no «apareció» a esa hora, ya
-    // estaba sin imagen.
-    const yaEstaba = e.tipo === 'aparece-rota' && vistoTarde(e.publicada, e.at);
+    // Visto al volver de una pausa (arranque, noche, caída): no «apareció» a
+    // esa hora, ya estaba sin imagen.
+    const yaEstaba = e.tipo === 'aparece-rota' && Boolean(e.trasPausa);
     // El enlace del boletín; si el vigía ya no lo tiene, el de su ID
     // (cali.gov.co lo redirige a la página del boletín).
     const url = p?.enlace ?? (/^\d+$/.test(e.pubId) ? `https://www.cali.gov.co/publicaciones/${e.pubId}/` : null);
@@ -484,10 +484,9 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
         ? rotas.map((v) => {
             const p = delVigia.get(v.pubId);
             const publicada = p?.publicada ?? publicadas.get(v.pubId) ?? null;
-            // Solo el vigía sabe si nunca tuvo imagen; sin él no se afirma.
-            const desdePublicacion = Boolean(p?.rotaDesdePublicacion && publicada);
-            const desde = desdePublicacion ? publicada : (p?.rotaDesde ?? null);
-            const alMenos = !desdePublicacion && p?.rotaDesde && p.rotaDesde === vigia?.desde ? 'al menos ' : '';
+            // Desde que el vigía la vio sin imagen; sin él no se afirma.
+            const desde = p?.rotaDesde ?? null;
+            const alMenos = p?.rotaTrasPausa ? 'al menos ' : '';
             return el(
               'li',
               null,
@@ -549,7 +548,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
                   el(
                     'div',
                     { class: 'datos' },
-                    dato('Publicado', hora(p.publicada)),
+                    dato('Apareció sin imagen', horaJunto(p.rotaDesde, p.arreglada!)),
                     dato(
                       'Apareció la imagen',
                       p.arregloEnPausa && p.ultimaRota ? `entre ${hora(p.ultimaRota)} y ${hora(p.arreglada)}` : hora(p.arreglada),
