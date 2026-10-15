@@ -198,6 +198,8 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     titulo: string;
     enlace: string | null;
     enPortada: boolean;
+    /** La primera vez que el monitoreo lo vio en la portada. */
+    primeraVez: string | null;
     estado: 'ok' | 'rota' | null;
     bloques: string[];
     /** La pone quien publica en el CMS (a veces solo el día): no mide nada. */
@@ -323,7 +325,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
   }
 
   /** Una fila del historial: hora del cambio · qué pasó · boletín; debajo,
-   *  cuándo se publicó y, en una corrección, cuánto tardó. */
+   *  su primer reporte y, en una corrección, cuánto tardó. */
   function filaEvento(e: EventoVigia, p: PubVigia | undefined) {
     const tono = e.tipo === 'arreglada' ? 'ok' : e.tipo === 'aparece-rota' || e.tipo === 'vuelve-a-fallar' ? 'rota' : '';
     // Visto al volver de una pausa (arranque, noche, caída): no «apareció» a
@@ -335,11 +337,15 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
     const titulo = enlace(e.titulo, url, 'que');
     titulo.setAttribute('title', e.titulo);
     const detalle: string[] = [];
-    if (e.publicada) {
+    // El primer reporte del boletín (no su publicación en el CMS, que la pone
+    // quien publica): en una corrección, cuándo se vio sin imagen; si no,
+    // cuándo se vio por primera vez. La fila «Apareció…» ya es ese reporte.
+    const primer = e.tipo === 'arreglada' && p?.arreglada === e.at ? p.rotaDesde : (p?.primeraVez ?? null);
+    if (primer && primer !== e.at && !e.tipo.startsWith('aparece-')) {
       detalle.push(
-        claveDia(e.publicada) === claveDia(e.at)
-          ? `publicado a ${aLas(e.publicada)}`
-          : `publicado el ${diaMes(e.publicada)} a ${aLas(e.publicada)}`,
+        claveDia(primer) === claveDia(e.at)
+          ? `primer reporte a ${aLas(primer)}`
+          : `primer reporte el ${diaMes(primer)} a ${aLas(primer)}`,
       );
     }
     // Lo que tardó, en la corrección más reciente del boletín.
@@ -483,8 +489,8 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
       ...(rotas.length
         ? rotas.map((v) => {
             const p = delVigia.get(v.pubId);
-            const publicada = p?.publicada ?? publicadas.get(v.pubId) ?? null;
-            // Desde que el vigía la vio sin imagen; sin él no se afirma.
+            // Desde que el vigía la vio sin imagen (primer reporte); sin él no
+            // se afirma.
             const desde = p?.rotaDesde ?? null;
             const alMenos = p?.rotaTrasPausa ? 'al menos ' : '';
             return el(
@@ -495,7 +501,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
                 'div',
                 { class: 'datos' },
                 el('span', { text: [`#${v.pubId}`, ...v.bloques].join(' · ') }),
-                dato('Publicado', fechaHora(publicada)),
+                dato('Primer reporte', horaJunto(desde, Date.now())),
                 desde && dato('Sin imagen', alMenos + duracion(minutosDesde(desde)), 'rota'),
               ),
             );
@@ -548,7 +554,7 @@ const EXCEL = 'https://autonex-publico.jodarini.dev/reporte-imagenes/excel';
                   el(
                     'div',
                     { class: 'datos' },
-                    dato('Apareció sin imagen', horaJunto(p.rotaDesde, p.arreglada!)),
+                    dato('Primer reporte', horaJunto(p.rotaDesde, p.arreglada!)),
                     dato(
                       'Apareció la imagen',
                       p.arregloEnPausa && p.ultimaRota ? `entre ${hora(p.ultimaRota)} y ${hora(p.arreglada)}` : hora(p.arreglada),
