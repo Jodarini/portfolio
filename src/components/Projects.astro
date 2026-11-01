@@ -1,5 +1,31 @@
 ---
-const projects = [
+interface Project {
+  title: string;
+  description: string;
+  highlights?: string[];
+  link?: string;
+  github?: string;
+  note?: string;
+  image: string;
+  video?: string;
+  techStack: string[];
+}
+
+const projects: Project[] = [
+  {
+    title: "Autonex",
+    description: "An internal tool that publishes the Alcaldía de Cali's press releases to cali.gov.co. You drop in a Word doc and photos, check what it extracted, and it builds the full draft in the CMS.",
+    highlights: [
+      "The title, summary, topics, cover, gallery and attachments come pre-filled from the Word doc, and one click builds the complete draft in about 20 seconds.",
+      "Press releases that arrive by email are drafted automatically, and a push notification says when they're ready to publish.",
+      "Catches what the CMS would break without warning, like duplicate press releases, summaries over 200 characters and unsafe characters, before anything is saved.",
+      "303 press releases published in its first six weeks. Autonex can't publish anything itself: a person always makes the final click."
+    ],
+    note: "Private repo · used daily in production",
+    image: "/projects/autonex-poster.webp",
+    video: "/projects/autonex.mp4",
+    techStack: ["Vue 3", "TypeScript", "shadcn-vue", "Tailwind CSS", "Bun", "Express", "Playwright", "Web Push", "Cloudflare Access", "Vitest"]
+  },
   {
     title: "Stock it",
     description: "Stock It (Yobanas Manager) is a mobile‑first SaaS for fashion retailers to manage inventory, product variants, and sales analytics in real time. ",
@@ -40,11 +66,35 @@ const projects = [
   <div class="flex flex-col gap-4">
     {projects.map(project => (
     <div class="rounded-lg overflow-hidden border border-gray-200/10 p-4 flex flex-col gap-4">
-        <img src={project.image} alt={`Preview of ${project.title}`} class="w-full object-cover rounded-lg" />
+        {project.video ? (
+          <video
+            class="project-video w-full aspect-[1278/798] object-cover rounded-lg"
+            src={project.video}
+            poster={project.image}
+            width="1278"
+            height="798"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            aria-label={`Demo of ${project.title}`}
+          ></video>
+        ) : (
+          <img src={project.image} alt={`Preview of ${project.title}`} class="w-full object-cover rounded-lg" />
+        )}
         <div class="project-content flex flex-col justify-between w-full">
           <h4 class="text-[1.2rem] text-[var(--accent)] mb-2 mt-0 font-bold">{project.title}</h4>
           <p class="text-sm mb-4 leading-relaxed">{project.description}</p>
-          
+
+          {project.highlights && (
+            <ul class="text-sm mb-4 leading-relaxed list-disc pl-5 flex flex-col gap-1 marker:text-[var(--accent)]">
+              {project.highlights.map(highlight => (
+                <li>{highlight}</li>
+              ))}
+            </ul>
+          )}
+
           <div class="flex flex-wrap gap-2 mb-4">
             {project.techStack.map(tech => (
               <span class="border border-gray-200/10 px-2 py-1 rounded-full text-[0.8rem]">
@@ -53,15 +103,25 @@ const projects = [
             ))}
           </div>
 
-          <div class="project-links flex justify-between">
-            {project.link && 
+          <div class="project-links flex flex-wrap gap-x-4 gap-y-2 justify-between">
+            {project.link &&
               <a href={project.link} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
                 View Project
               </a>
             }
-            <a href={project.github} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
-              Github
-            </a>
+            {project.video &&
+              <a href={project.video} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
+                Watch full size
+              </a>
+            }
+            {project.github &&
+              <a href={project.github} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
+                Github
+              </a>
+            }
+            {project.note &&
+              <span class="text-sm text-gray-500">{project.note}</span>
+            }
           </div>
         </div>
       </div>
@@ -69,3 +129,14 @@ const projects = [
   </div>
 </section>
 
+<script>
+  // Sin animaciones para quien las pidió apagadas: el video queda en pausa
+  // en su primer cuadro y con controles para reproducirlo a mano.
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    for (const video of document.querySelectorAll<HTMLVideoElement>(".project-video")) {
+      video.pause();
+      video.removeAttribute("autoplay");
+      video.controls = true;
+    }
+  }
+</script>
