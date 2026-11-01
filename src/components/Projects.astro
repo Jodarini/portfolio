@@ -1,31 +1,28 @@
 ---
-interface Project {
-  title: string;
-  description: string;
-  highlights?: string[];
-  link?: string;
-  github?: string;
-  note?: string;
-  image: string;
-  video?: string;
-  techStack: string[];
-}
+const autonex = {
+  title: "Autonex",
+  status: "In production",
+  lead: "The internal tool behind the Alcaldía de Cali's press releases. Publishing one on cali.gov.co used to take 20–30 minutes of manual work in the CMS. With Autonex it takes 1–2 minutes of review.",
+  stats: [
+    { value: "10–20×", label: "less hands-on time per press release" },
+    { value: "6.4 min", label: "median time from email to live" },
+    { value: "303", label: "press releases published in 6 weeks" },
+    { value: "25 s", label: "median time to build a full draft" }
+  ],
+  footnote: "Autonex times are measured from its logs. The manual time is an estimate.",
+  highlights: [
+    { title: "Does the busywork.", text: "Reads the Word doc, crops the cover, builds the photo gallery and fills in every field of the CMS." },
+    { title: "Starts before anyone asks.", text: "Press releases that arrive by email are drafted automatically, and a push notification on desktop or phone says when they're ready." },
+    { title: "No silent failures.", text: "Catches duplicates and anything the CMS would quietly break, and checks every step by reading the CMS back." },
+    { title: "People stay in control.", text: "It can't publish on its own: a person always makes the final click." }
+  ],
+  builtWith: "Solo and end to end, from product design to the server it runs on: a Vue 3 + shadcn-vue interface, a Bun and Express API that drives the CMS over plain HTTP (with Playwright as a fallback), 930 automated tests, and a Cloudflare setup that keeps it private.",
+  video: "/projects/autonex.mp4",
+  poster: "/projects/autonex-poster.webp",
+  techStack: ["Vue 3", "TypeScript", "shadcn-vue", "Tailwind CSS", "Bun", "Express", "Playwright", "Web Push", "Cloudflare Access", "Vitest"]
+};
 
-const projects: Project[] = [
-  {
-    title: "Autonex",
-    description: "An internal tool that publishes the Alcaldía de Cali's press releases to cali.gov.co. You drop in a Word doc and photos, check what it extracted, and it builds the full draft in the CMS.",
-    highlights: [
-      "The title, summary, topics, cover, gallery and attachments come pre-filled from the Word doc, and one click builds the complete draft in about 20 seconds.",
-      "Press releases that arrive by email are drafted automatically, and a push notification says when they're ready to publish.",
-      "Catches what the CMS would break without warning, like duplicate press releases, summaries over 200 characters and unsafe characters, before anything is saved.",
-      "303 press releases published in its first six weeks. Autonex can't publish anything itself: a person always makes the final click."
-    ],
-    note: "Private repo · used daily in production",
-    image: "/projects/autonex-poster.webp",
-    video: "/projects/autonex.mp4",
-    techStack: ["Vue 3", "TypeScript", "shadcn-vue", "Tailwind CSS", "Bun", "Express", "Playwright", "Web Push", "Cloudflare Access", "Vitest"]
-  },
+const projects = [
   {
     title: "Stock it",
     description: "Stock It (Yobanas Manager) is a mobile‑first SaaS for fashion retailers to manage inventory, product variants, and sales analytics in real time. ",
@@ -64,36 +61,85 @@ const projects: Project[] = [
 <section class="projects mb-16">
   <h3 class="text-2xl text-[var(--secondary)] mb-4 font-bold">Projects</h3>
   <div class="flex flex-col gap-4">
+    <article class="rounded-lg overflow-hidden border border-[#c4a7e7]/30 p-4 flex flex-col gap-4">
+      <video
+        class="project-video w-full aspect-[1278/798] object-cover rounded-lg"
+        src={autonex.video}
+        poster={autonex.poster}
+        width="1278"
+        height="798"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        aria-label={`Demo of ${autonex.title}`}
+      ></video>
+
+      <div class="flex flex-col gap-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-3 mb-2">
+            <h4 class="text-[1.2rem] text-[var(--accent)] m-0 font-bold">{autonex.title}</h4>
+            <span class="border border-[#c4a7e7]/40 text-[var(--accent)] px-2 py-0.5 rounded-full text-[0.7rem] uppercase tracking-widest">
+              {autonex.status}
+            </span>
+          </div>
+          <p class="text-base leading-relaxed m-0">{autonex.lead}</p>
+        </div>
+
+        <div>
+          <dl class="grid grid-cols-2 sm:grid-cols-4 gap-2 m-0">
+            {autonex.stats.map(stat => (
+              <div class="flex flex-col-reverse justify-end rounded-lg border border-gray-200/10 p-3">
+                <dt class="text-xs text-gray-400 leading-snug mt-1">{stat.label}</dt>
+                <dd class="m-0 text-xl font-semibold text-gray-100">{stat.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p class="text-xs text-gray-500 mt-2 mb-0">{autonex.footnote}</p>
+        </div>
+
+        <ul class="text-sm leading-relaxed list-none p-0 m-0 flex flex-col gap-2">
+          {autonex.highlights.map(highlight => (
+            <li>
+              <span class="font-bold text-gray-100">{highlight.title}</span> {highlight.text}
+            </li>
+          ))}
+        </ul>
+
+        <div>
+          <h5 class="text-xs uppercase tracking-widest text-gray-500 font-bold mt-0 mb-2">How I built it</h5>
+          <p class="text-sm leading-relaxed m-0">{autonex.builtWith}</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          {autonex.techStack.map(tech => (
+            <span class="border border-gray-200/10 px-2 py-1 rounded-full text-[0.8rem]">
+              {tech}
+            </span>
+          ))}
+        </div>
+
+        <div class="project-links flex flex-wrap gap-x-4 gap-y-2 justify-between items-baseline">
+          <a href="#contact" class="project-link inline-block text-[var(--accent)] no-underline border-b border-[var(--accent)] transition-opacity duration-300 hover:opacity-80 text-sm">
+            Have a process that eats hours every week? Let's automate it
+          </a>
+          <span class="flex gap-4 items-baseline">
+            <a href={autonex.video} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
+              Watch full size
+            </a>
+            <span class="text-sm text-gray-500">Private repo</span>
+          </span>
+        </div>
+      </div>
+    </article>
+
     {projects.map(project => (
     <div class="rounded-lg overflow-hidden border border-gray-200/10 p-4 flex flex-col gap-4">
-        {project.video ? (
-          <video
-            class="project-video w-full aspect-[1278/798] object-cover rounded-lg"
-            src={project.video}
-            poster={project.image}
-            width="1278"
-            height="798"
-            autoplay
-            muted
-            loop
-            playsinline
-            preload="metadata"
-            aria-label={`Demo of ${project.title}`}
-          ></video>
-        ) : (
-          <img src={project.image} alt={`Preview of ${project.title}`} class="w-full object-cover rounded-lg" />
-        )}
+        <img src={project.image} alt={`Preview of ${project.title}`} class="w-full object-cover rounded-lg" />
         <div class="project-content flex flex-col justify-between w-full">
           <h4 class="text-[1.2rem] text-[var(--accent)] mb-2 mt-0 font-bold">{project.title}</h4>
           <p class="text-sm mb-4 leading-relaxed">{project.description}</p>
-
-          {project.highlights && (
-            <ul class="text-sm mb-4 leading-relaxed list-disc pl-5 flex flex-col gap-1 marker:text-[var(--accent)]">
-              {project.highlights.map(highlight => (
-                <li>{highlight}</li>
-              ))}
-            </ul>
-          )}
 
           <div class="flex flex-wrap gap-2 mb-4">
             {project.techStack.map(tech => (
@@ -103,25 +149,15 @@ const projects: Project[] = [
             ))}
           </div>
 
-          <div class="project-links flex flex-wrap gap-x-4 gap-y-2 justify-between">
+          <div class="project-links flex justify-between">
             {project.link &&
               <a href={project.link} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
                 View Project
               </a>
             }
-            {project.video &&
-              <a href={project.video} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
-                Watch full size
-              </a>
-            }
-            {project.github &&
-              <a href={project.github} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
-                Github
-              </a>
-            }
-            {project.note &&
-              <span class="text-sm text-gray-500">{project.note}</span>
-            }
+            <a href={project.github} class="project-link inline-block text-[var(--secondary)] no-underline border-b border-[var(--secondary)] transition-opacity duration-300 hover:opacity-80 text-sm" target="_blank">
+              Github
+            </a>
           </div>
         </div>
       </div>
